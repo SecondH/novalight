@@ -17,9 +17,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   pull_request:
-
+    branches: [main, develop]
 jobs:
   validate:
     runs-on: ubuntu-latest
