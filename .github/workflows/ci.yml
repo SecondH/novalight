@@ -1,0 +1,67 @@
+name: CI
+
+# CI/CD foundation per docs/project/001-project-charter.md §5 ("CI/CD foundation" is an
+# in-scope Phase 0 deliverable) and docs/development/015-development-workflow.md §13's
+# quality-gate sequence (Lint -> Type Check -> Tests -> Build Validation). This workflow
+# implements that sequence; it deliberately does not deploy anything (no environment/secrets
+# are wired) and does not run Security Review, which is a human/reviewer gate, not a CI step.
+#
+# Platform choice: GitHub Actions is now a ratified decision -- ADR-019
+# (docs/architecture/024-cicd-platform-decision.md), accepted during M1.7 Delivery Foundation.
+# This is no longer a placeholder default; see that ADR for the finalization basis and its
+# explicit caveat that no live repository is confirmed to exist on GitHub yet.
+#
+# Postgres service added during M1.7 (docs/operations/027-m1.7-delivery-foundation-report.md)
+# so the real DB-backed ownership-isolation tests (previously only run locally, see
+# apps/api/src/ownership-isolation.test.ts) run in CI too, not just as a documented gap.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: novalight
+          POSTGRES_PASSWORD: changeme
+          POSTGRES_DB: novalight
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U novalight"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://novalight:changeme@localhost:5432/novalight?schema=public
+      RUN_DB_INTEGRATION_TESTS: '1'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Apply database migrations
+        run: npm run migrate:deploy --workspace=@novalight/database
+
+      - name: Test
+        run: npm run test
+
+      - name: Build
+        run: npm run build

@@ -1,0 +1,17 @@
+# Claude Code local/machine-specific settings — never commit
+.claude/settings.local.json
+
+# Node / monorepo (anticipatory — Phase 0 target stack per ADR-001/002/003/005)
+node_modules/
+dist/
+build/
+.next/
+coverage/
+.turbo/
+
+# Environment files -- broadened during M1.5 planning after independent risk review found
+# .env.production (and similar) were NOT actually excluded at the repo root or in apps/api
+# under the previous narrower patterns (only apps/web/.gitignore had a real .env* wildcard).
+.env
+.env.*
+!.env.example

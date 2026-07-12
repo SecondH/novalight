@@ -1,0 +1,17 @@
+{
+  "name": "@novalight/auth",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Authentication/authorization/audit abstraction interfaces only -- no provider implementation yet. See src/README.md.",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "eslint \"src/**/*.ts\"",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "echo \"no tests yet -- interfaces only, nothing to execute\" && exit 0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}

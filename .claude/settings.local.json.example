@@ -1,0 +1,12 @@
+{
+  "$comment": "Template for machine-specific Claude Code settings. Copy this file to '.claude/settings.local.json' (gitignored, never committed) and edit it locally. Do not put secrets directly in permission rules or env values here — use env var references or a local secrets manager instead. This file itself must never contain a real credential.",
+  "permissions": {
+    "allow": [
+      "Bash(git status)",
+      "Bash(git diff)"
+    ]
+  },
+  "env": {
+    "EXAMPLE_LOCAL_ONLY_VAR": "replace_with_your_local_value"
+  }
+}

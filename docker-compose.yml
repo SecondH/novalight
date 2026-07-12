@@ -1,0 +1,27 @@
+## Local development database only -- per docs/deployment/021-m1.5-production-foundation-plan.md
+## and docs/operations/025-m1.6-operational-activation-report.md's dev-environment-activation
+## decision. NOT used for staging/production (those are separate Supabase projects, per ADR-012
+## and docs/operations/023-environment-strategy.md §6). Host port 5433 (not the default 5432)
+## deliberately, to avoid colliding with any other Postgres container already running on this
+## machine for an unrelated project.
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: novalight-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: novalight
+      POSTGRES_PASSWORD: novalight_dev_only
+      POSTGRES_DB: novalight
+    ports:
+      - '5433:5432'
+    volumes:
+      - novalight_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U novalight']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  novalight_postgres_data:

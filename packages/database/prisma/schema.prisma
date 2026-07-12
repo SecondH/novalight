@@ -1,0 +1,168 @@
+// NovaLight database schema.
+//
+// Phase 0 scope was intentionally minimal (User model only) per
+// docs/architecture/012-database-architecture.md §5. That constraint's "requirements approved"
+// event has now happened for the Social AI MVP -- ADR-018 v1.2
+// (docs/architecture/social-ai-platform/027-data-model-scope-decision.md) was accepted
+// 2026-07-11, authorizing the Account/Brand/ContentIdea/ContentDraft/CalendarEntry entities
+// below. Do not add another model here without an approved ADR and a database-change-review
+// (see .claude/skills/database-change-review/SKILL.md) -- ApprovalHistory and PerformanceRecord
+// are explicitly NOT in this migration (Stage 2 / Stage 4, per ADR-018's staged introduction).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Phase 0's original entity. Naming/PK/timestamp conventions per
+/// docs/architecture/012-database-architecture.md §6-7 (snake_case columns, UUID PK,
+/// created_at/updated_at on core entities).
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  /// Stage 1: a User owns at most one Account (enforced at the application layer via
+  /// resolveAccountForUser, per docs/architecture/social-ai-platform/028-m1-technical-design.md
+  /// §2.2 -- not a DB-level unique constraint yet, since Stage 3 introduces a many-to-many
+  /// join table rather than reworking this relation, per ADR-018 v1.2's "Ownership chain").
+  ownedAccounts Account[] @relation("AccountOwner")
+
+  @@map("users")
+}
+
+/// Business/tenant ownership root -- ADR-018 v1.2. Distinct from User (login identity).
+/// Every Brand/Content* entity below scopes directly to account_id, not through a join chain.
+model Account {
+  id          String   @id @default(uuid())
+  // @unique enforces the Stage 1 "one Account per User" rule at the database layer, not just
+  // in AccountsService's check-then-create -- added after independent review (solution-architect,
+  // data-architect, and quality-gate-reviewer all separately flagged the same TOCTOU race:
+  // without this, two concurrent POST /accounts calls from the same user could both pass the
+  // application-layer check and each insert a row). Drop this constraint, not just relax it,
+  // when Stage 3 introduces multiple Users per Account via a join table -- it is specific to
+  // Stage 1's 1:1 assumption.
+  ownerUserId String   @unique @map("owner_user_id")
+  owner       User     @relation("AccountOwner", fields: [ownerUserId], references: [id])
+  vertical    Vertical
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  brand           Brand?
+  contentIdeas    ContentIdea[]
+  contentDrafts   ContentDraft[]
+  calendarEntries CalendarEntry[]
+
+  @@map("accounts")
+}
+
+/// Persistent brand understanding, conceptually defined in
+/// docs/architecture/social-ai-platform/021-knowledge-model.md §2. Single-brand-per-account
+/// at Stage 1 (docs/product/mvp-social-ai/021-mvp-scope.md §2) -- Account.brand is 1:1.
+model Brand {
+  id                     String   @id @default(uuid())
+  accountId              String   @unique @map("account_id")
+  account                Account  @relation(fields: [accountId], references: [id])
+  vertical               Vertical
+  toneDescriptors        String   @map("tone_descriptors")
+  audienceDescription    String   @map("audience_description")
+  visualStyleDescriptors String   @map("visual_style_descriptors")
+  offeringsSummary       String   @map("offerings_summary")
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
+
+  contentIdeas ContentIdea[]
+
+  // No separate @@index([accountId]) -- the @unique above already creates one; a second,
+  // identical index was redundant write/storage cost with no query benefit (caught by
+  // independent data-architect review).
+  @@map("brands")
+}
+
+/// Content Planner Agent output. account_id is a direct FK (not inferred via brand_id) --
+/// ADR-018 v1.2 Consequences: "must not rely on transitive ownership inferred through a join."
+model ContentIdea {
+  id             String   @id @default(uuid())
+  accountId      String   @map("account_id")
+  account        Account  @relation(fields: [accountId], references: [id])
+  brandId        String   @map("brand_id")
+  brand          Brand    @relation(fields: [brandId], references: [id])
+  topic          String
+  intendedFormat String   @map("intended_format")
+  targetDate     DateTime @map("target_date")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  contentDraft ContentDraft?
+
+  @@index([accountId])
+  @@index([brandId])
+  @@map("content_ideas")
+}
+
+/// Copywriter + Visual Prompt Engineer output, plus approval state. Direct account_id FK,
+/// same reasoning as ContentIdea.
+model ContentDraft {
+  id               String        @id @default(uuid())
+  accountId        String        @map("account_id")
+  account          Account       @relation(fields: [accountId], references: [id])
+  contentIdeaId    String        @unique @map("content_idea_id")
+  contentIdea      ContentIdea   @relation(fields: [contentIdeaId], references: [id])
+  captionText      String?       @map("caption_text")
+  visualPromptText String?       @map("visual_prompt_text")
+  approvalState    ApprovalState @default(DRAFT) @map("approval_state")
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
+
+  calendarEntry CalendarEntry?
+
+  @@index([accountId])
+  @@map("content_drafts")
+}
+
+/// Scheduled/posted content. Direct account_id FK, same reasoning as ContentIdea/ContentDraft.
+/// ApprovalHistory and PerformanceRecord (Stage 2/4) are NOT modeled here -- ADR-018 v1.2
+/// staged introduction; docs/architecture/social-ai-platform/028-m1-technical-design.md §1.7.
+model CalendarEntry {
+  id             String       @id @default(uuid())
+  accountId      String       @map("account_id")
+  account        Account      @relation(fields: [accountId], references: [id])
+  contentDraftId String       @unique @map("content_draft_id")
+  contentDraft   ContentDraft @relation(fields: [contentDraftId], references: [id])
+  scheduledDate  DateTime     @map("scheduled_date")
+  postedState    PostedState  @default(SCHEDULED) @map("posted_state")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  @@index([accountId])
+  @@map("calendar_entries")
+}
+
+/// The five MVP target verticals, per docs/product/mvp-social-ai/018-target-customer-definition.md.
+enum Vertical {
+  BEAUTY_SALON
+  RESTAURANT
+  CAFE
+  LOCAL_SERVICE
+  RETAIL
+}
+
+/// Per docs/architecture/social-ai-platform/028-m1-technical-design.md §1.5.
+enum ApprovalState {
+  DRAFT
+  EDITED
+  APPROVED
+  DISCARDED
+}
+
+/// Per docs/architecture/social-ai-platform/028-m1-technical-design.md §1.6.
+enum PostedState {
+  SCHEDULED
+  POSTED
+  DISCARDED
+}
