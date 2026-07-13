@@ -1,5 +1,6 @@
 import { createClerkClient, verifyToken } from '@clerk/backend';
 import type { AuthenticatedIdentity, AuthProvider } from '@novalight/auth';
+import { UserProvisioningService } from '../services/user-provisioning.service';
 
 /**
  * Production/development AuthProvider implementation using Clerk's backend SDK, per
@@ -15,11 +16,20 @@ import type { AuthenticatedIdentity, AuthProvider } from '@novalight/auth';
  * environment to validate against end-to-end (see docs/operations/025-m1.6-operational-
  * activation-report.md). This class is implemented and unit-tested (mocked SDK) so the
  * activation step, once real Clerk keys exist, is "flip the import," not "write the code."
+ *
+ * verifySession's userId is the local NovaLight User.id UUID, not Clerk's own sub claim --
+ * Account.ownerUserId is a hard FK to User.id, so returning Clerk's raw id here would break
+ * every ownership lookup. UserProvisioningService resolves (or, as a bounded JIT fallback,
+ * provisions) that local id from the verified Clerk identity -- ADR-029
+ * (docs/architecture/029-clerk-identity-mapping-and-provisioning.md).
  */
 export class ClerkAuthProvider implements AuthProvider {
   private readonly clerkClient: ReturnType<typeof createClerkClient>;
 
-  constructor(private readonly secretKey: string) {
+  constructor(
+    private readonly secretKey: string,
+    private readonly userProvisioningService: UserProvisioningService = new UserProvisioningService(),
+  ) {
     this.clerkClient = createClerkClient({ secretKey });
   }
 
@@ -42,7 +52,17 @@ export class ClerkAuthProvider implements AuthProvider {
       return null;
     }
 
-    return { userId: payload.sub, email: primaryEmail };
+    const localUserId = await this.userProvisioningService.resolveOrProvisionLocalUserId({
+      clerkUserId: payload.sub,
+      email: primaryEmail,
+    });
+    if (!localUserId) {
+      // Either provisioning failed to resolve a mapping, or the mapped User is deactivated --
+      // both fail closed, same as an invalid token.
+      return null;
+    }
+
+    return { userId: localUserId, email: primaryEmail };
   }
 
   async invalidateSession(sessionToken: string): Promise<void> {

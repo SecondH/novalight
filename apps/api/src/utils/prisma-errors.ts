@@ -42,3 +42,13 @@ export async function withUniqueConstraintAsBusinessError<T>(
     throw error;
   }
 }
+
+/**
+ * Same P2002 check as withUniqueConstraintAsBusinessError, exposed as a predicate rather than
+ * a wrapper -- UserProvisioningService's JIT-provisioning race (two concurrent requests, or a
+ * request racing the Clerk webhook, creating the same clerkUserId) needs to catch-and-re-read
+ * rather than convert to an HTTP error, so it can't use the wrapper above.
+ */
+export function isUniqueConstraintViolation(error: unknown): boolean {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002';
+}

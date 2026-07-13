@@ -14,6 +14,11 @@ export function createApp(): Application {
 
   applySecurityMiddleware(app);
   applyLoggingMiddleware(app);
+  // Must run before the global express.json() below -- Clerk webhook signature verification
+  // (apps/api/src/modules/webhooks) needs the exact raw bytes Clerk signed, not a re-serialized
+  // JSON object. body-parser sets req._body after parsing, so express.json() below correctly
+  // no-ops for this path instead of re-parsing it.
+  app.use('/api/v1/webhooks/clerk', express.raw({ type: 'application/json' }));
   app.use(express.json());
 
   app.use('/api/v1', v1Router);

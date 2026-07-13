@@ -20,6 +20,11 @@ const envSchema = z.object({
   // wiring is a follow-up, not part of this activation pass -- see
   // docs/operations/025-m1.6-operational-activation-report.md).
   CLERK_SECRET_KEY: z.string().optional(),
+  // Optional -- unset means the Clerk webhook route (apps/api/src/modules/webhooks) rejects
+  // every request (no signing secret to verify against). Required only once the webhook is
+  // configured in the Clerk dashboard for the NovaLight application. See ADR-029
+  // (docs/architecture/029-clerk-identity-mapping-and-provisioning.md).
+  CLERK_WEBHOOK_SIGNING_SECRET: z.string().optional(),
   // Optional -- unset means the ConsoleErrorTracker fallback stays active (see
   // apps/api/src/monitoring/error-tracker.ts). No live Sentry project exists in this
   // environment; see docs/operations/025-m1.6-operational-activation-report.md.
@@ -31,6 +36,12 @@ const envSchema = z.object({
   // default doesn't distinguish staging from development -- both are "non-production" -- so
   // staging would otherwise inherit fully permissive CORS unless this is explicitly set.
   CORS_ALLOWED_ORIGINS: z.string().optional(),
+  // Defaults to enabled -- preserves ADR-029's original JIT-fallback behavior (immediate
+  // consistency when a session arrives before its webhook has been processed). Set to "false"
+  // to require the webhook to provision a User row before that identity can authenticate --
+  // an operational toggle for environments wanting stricter control over identity-creation
+  // timing, not a behavior change to the default path.
+  ENABLE_JIT_PROVISIONING: z.enum(['true', 'false']).default('true'),
 });
 
 export type Env = z.infer<typeof envSchema>;
