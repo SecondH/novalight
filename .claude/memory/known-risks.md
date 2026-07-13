@@ -148,6 +148,14 @@ Only evidenced risks are recorded here — no speculative risk assessment. See [
 - Owner: Unknown — requires a human with repository admin rights.
 - Status: Open. Per CLAUDE.md §15, this is an escalation-tier finding requiring explicit user approval/decision before proceeding with security-sensitive merges, though it does not block the one-line CI fix itself.
 
+## apps/web/.gitignore missing the `!.env.example` exception (found and fixed, 2026-07-13)
+
+- Evidence: `apps/web/.gitignore` (standard `create-next-app` boilerplate, never previously touched) has a blanket `.env*` rule with no negation — unlike the repo-root `.gitignore`, which explicitly re-includes `.env.example` (added per the M1.5 review recorded elsewhere in this file). No `apps/web/.env.example` existed before this session, so the gap was latent and never previously triggered. Creating one during Clerk activation (documenting `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`/`CLERK_SECRET_KEY`) surfaced it: the file existed on disk but `git status` never showed it, silently excluded from being trackable at all.
+- Impact: Medium as found (a documented, empty-placeholder env-example file — not a secret — would have been silently omitted from every future commit, unnoticed, until someone manually forced it with `git add -f` or cloned the repo and wondered why `apps/web` had no env-var documentation apps/api and packages/database both have).
+- Recommended action: none further — fixed same-session. Added `!.env.example` to `apps/web/.gitignore`, verified with `git check-ignore -v` that the new file is now trackable.
+- Owner: Unknown
+- Status: Resolved.
+
 ## Missing tests / fragile integrations / operational risks
 
 - **Correction (2026-07-11, caught by independent QA/risk review during the MVP implementation-readiness gate):** this entry previously read "not applicable yet — no code, tests, or integrations exist in the repository." That is stale — the Phase 0 scaffold is physically present in the working tree (`apps/web`, `apps/api`, `packages/database`, `packages/auth`, `packages/ai-core`, `.github/workflows/ci.yml`) and includes at least one real test file (`apps/api/src/health.test.ts`).

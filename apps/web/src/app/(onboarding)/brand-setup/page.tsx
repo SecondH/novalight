@@ -1,6 +1,4 @@
-'use client';
-
-import { useEffect, useState } from 'react';
+import { auth } from '@clerk/nextjs/server';
 import { BrandSetupForm } from '@/features/brand-setup/components/BrandSetupForm';
 
 /**
@@ -8,20 +6,17 @@ import { BrandSetupForm } from '@/features/brand-setup/components/BrandSetupForm
  * "(onboarding)" per docs/architecture/011-frontend-architecture.md §6, does not affect the
  * URL (resolves to /brand-setup).
  *
- * Reads a session token from localStorage as an explicit placeholder: this M1 skeleton has no
- * real Clerk-backed session (docs/architecture/social-ai-platform/028-m1-technical-design.md
- * §2.1 -- authentication vendor integration is out of M1 scope). This must be replaced by
- * real session retrieval once Clerk is wired in, not extended.
+ * Session comes from Clerk (Next.js 15 async `auth()`) -- see ADR-029
+ * (docs/architecture/029-clerk-identity-mapping-and-provisioning.md). The `if (!token)` fallback
+ * below is defensive only: src/middleware.ts already redirects unauthenticated requests to
+ * /sign-in before this Server Component renders, per its protected-by-default posture.
  */
-export default function BrandSetupPage() {
-  const [token, setToken] = useState<string | null>(null);
+export default async function BrandSetupPage() {
+  const session = await auth();
+  const token = await session.getToken();
 
-  useEffect(() => {
-    setToken(window.localStorage.getItem('novalight_dev_session_token'));
-  }, []);
-
-  if (token === null) {
-    return <p>Sign in to continue. (No real authentication is wired up in this M1 skeleton.)</p>;
+  if (!token) {
+    return <p>Sign in to continue.</p>;
   }
 
   return (

@@ -4,14 +4,15 @@
   "private": true,
   "description": "NovaLight web application -- Phase 0 skeleton (default starter page only, no product UI). Next.js pinned to ^15 per ADR-003; create-next-app@latest resolved to Next.js 16 at scaffold time, which was rolled back to honor the accepted ADR -- see docs/development/016-phase-0-implementation-status.md.",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3010",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 3010",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
+    "@clerk/nextjs": "^7.5.17",
     "next": "^15.4.6",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
