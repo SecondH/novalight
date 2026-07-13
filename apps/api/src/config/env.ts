@@ -42,6 +42,26 @@ const envSchema = z.object({
   // an operational toggle for environments wanting stricter control over identity-creation
   // timing, not a behavior change to the default path.
   ENABLE_JIT_PROVISIONING: z.enum(['true', 'false']).default('true'),
+  // AI text-generation foundation (Groq). Master kill-switch -- default false means the
+  // /api/v1/ai/text/generate endpoint always responds with a clear "disabled" error, regardless
+  // of AI_PROVIDER, until an operator deliberately opts in. Real Groq calls additionally require
+  // AI_PROVIDER=groq; AI_ENABLED=true with the default AI_PROVIDER=mock only exercises the mock
+  // provider (e.g. for tests/CI), never a real vendor call.
+  AI_ENABLED: z.enum(['true', 'false']).default('false'),
+  // Explicit selection only -- no hidden fallback. Unknown values are rejected here at startup
+  // (fail fast), not discovered later inside the provider factory.
+  AI_PROVIDER: z.enum(['mock', 'groq']).default('mock'),
+  // Optional -- required only when AI_PROVIDER=groq. Never logged, never included in any error
+  // message. Get a real value from the Groq console -- never commit a real key.
+  GROQ_API_KEY: z.string().optional(),
+  // Optional -- required only when AI_PROVIDER=groq. No default model id is hardcoded in source
+  // (per the operator's own Groq console model selection) -- see docs/architecture/
+  // 028-groq-ai-provider-foundation.md "Model Handling".
+  GROQ_MODEL: z.string().optional(),
+  AI_REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().default(30_000),
+  AI_MAX_OUTPUT_TOKENS: z.coerce.number().int().positive().default(1200),
+  AI_MAX_PROMPT_CHARS: z.coerce.number().int().positive().default(12_000),
+  AI_RETRY_COUNT: z.coerce.number().int().min(0).default(1),
 });
 
 export type Env = z.infer<typeof envSchema>;
