@@ -24,6 +24,18 @@ datasource db {
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
+  /// Verified Clerk `sub` claim -- ADR-029. Nullable: a User row may predate Clerk linkage
+  /// (legacy/dev-seeded rows). Never use email as the persistent identity key -- see ADR-029
+  /// "why email is not the key" (Clerk allows email changes; email is not a stable join key).
+  /// Set by the Clerk webhook handler (idempotent upsert) and, as a bounded fallback, by
+  /// ClerkAuthProvider.verifySession on first successful token verification if the webhook
+  /// hasn't run yet.
+  clerkUserId String? @unique @map("clerk_user_id")
+  /// Soft-deactivation on a Clerk `user.deleted` webhook -- ADR-029. Null = active. Enforced at
+  /// the auth boundary only: ClerkAuthProvider.verifySession returns null (fails closed) for a
+  /// deactivated User. Does not cascade to Account/data retention -- that policy is explicitly
+  /// out of scope for ADR-029, see its "What This ADR Does Not Do".
+  deactivatedAt DateTime? @map("deactivated_at")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
