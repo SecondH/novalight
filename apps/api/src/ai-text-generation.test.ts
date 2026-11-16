@@ -8,12 +8,72 @@
  * AuthProvider's createSession(), not a static/arbitrary bearer string -- no database involved,
  * since this endpoint never touches Prisma.
  */
+// This suite repeatedly calls jest.resetModules() and dynamically re-imports the full Express
+// app graph (env.ts, @clerk/backend, the AI provider factory, etc.) once per test, for env-var
+// isolation. Under concurrent Turborepo execution (every workspace's tests running at once),
+// that per-test module-reimport cost can occasionally exceed Jest's default 5-second timeout,
+// even though each test's own logic completes quickly in isolation. Scoped to this file only --
+// not a repository-wide timeout change.
+jest.setTimeout(15_000);
+
+// env.ts's top-level `import 'dotenv/config'` re-reads the real apps/api/.env from disk on
+// every fresh module load (jest.resetModules() below clears the module cache, forcing env.ts to
+// re-evaluate on each test's dynamic import). dotenv only fills a process.env key that is still
+// unset -- without neutralizing it here, `delete process.env.AI_ENABLED` in beforeEach would be
+// silently undone on the very next import, refilling it from the developer's real local .env
+// (e.g. AI_ENABLED=true, a real GROQ_API_KEY/GROQ_MODEL for local Groq activation). Mocking the
+// side-effect-only module file-wide means every test's process.env state is exactly what that
+// test set, never influenced by the real .env.
+jest.mock('dotenv/config', () => ({}));
+
+// Authentication.ts now activates ClerkAuthProvider (ADR-029/ADR-030) -- a token minted via
+// InMemoryAuthProvider.createSession() is no longer accepted by the live app, since
+// requireAuthentication verifies it through Clerk's real verifyToken, not an in-memory map
+// lookup. Mocked here the same way clerk-auth-provider.test.ts mocks @clerk/backend, plus
+// UserProvisioningService (ClerkAuthProvider's own default-constructed dependency), so this
+// file keeps its documented "no database involved" property -- these tests exercise the real
+// requireAuthentication -> ClerkAuthProvider code path with a fully-controlled fake identity,
+// never a real Clerk network call or a real Prisma call.
+const verifyToken = jest.fn();
+const getUser = jest.fn();
+jest.mock('@clerk/backend', () => ({
+  createClerkClient: () => ({
+    users: { getUser: (...args: unknown[]) => getUser(...args) },
+    sessions: { revokeSession: jest.fn() },
+  }),
+  verifyToken: (...args: unknown[]) => verifyToken(...args),
+}));
+
+const resolveOrProvisionLocalUserId = jest.fn();
+jest.mock('./services/user-provisioning.service', () => ({
+  UserProvisioningService: jest.fn().mockImplementation(() => ({
+    resolveOrProvisionLocalUserId: (...args: unknown[]) => resolveOrProvisionLocalUserId(...args),
+  })),
+}));
+
 describe('POST /api/v1/ai/text/generate', () => {
   const ORIGINAL_ENV = process.env;
+  // Obvious placeholder, never validated cryptographically -- verifyToken is mocked above, so
+  // this only needs to be non-empty to satisfy authentication.ts's fail-closed startup check.
+  const FAKE_CLERK_SECRET = 'placeholder';
 
   beforeEach(() => {
     jest.resetModules();
     process.env = { ...ORIGINAL_ENV };
+    delete process.env.AI_ENABLED;
+    delete process.env.AI_PROVIDER;
+    delete process.env.GROQ_API_KEY;
+    delete process.env.GROQ_MODEL;
+    process.env.CLERK_SECRET_KEY = FAKE_CLERK_SECRET;
+    verifyToken.mockReset();
+    getUser.mockReset();
+    resolveOrProvisionLocalUserId.mockReset();
+    verifyToken.mockResolvedValue({ sub: 'clerk_test_user_1', sid: 'sess_test_1' });
+    getUser.mockResolvedValue({
+      primaryEmailAddressId: 'email_1',
+      emailAddresses: [{ id: 'email_1', emailAddress: 'test@example.com' }],
+    });
+    resolveOrProvisionLocalUserId.mockResolvedValue('test-user-1');
   });
 
   afterAll(() => {
@@ -22,9 +82,10 @@ describe('POST /api/v1/ai/text/generate', () => {
 
   async function buildAuthenticatedContext() {
     const { createApp } = await import('./app');
-    const { authProvider } = await import('./auth/in-memory-auth-provider');
-    const token = authProvider.createSession({ userId: 'test-user-1', email: 'test@example.com' });
-    return { app: createApp(), token };
+    // The token's actual content is irrelevant -- verifyToken is mocked above and never parses
+    // it -- but a non-empty string is required to pass requireAuthentication's bearer-token
+    // presence check.
+    return { app: createApp(), token: 'fake-clerk-session-token' };
   }
 
   it('rejects an unauthenticated request with 401', async () => {
@@ -132,6 +193,19 @@ describe('POST /api/v1/ai/text/generate', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.data.provider).toBe('mock'); // server config wins, not the client's request
+  });
+
+  it('fails closed at construction when AI_PROVIDER=groq is missing GROQ_API_KEY/GROQ_MODEL', async () => {
+    process.env.AI_ENABLED = 'true';
+    process.env.AI_PROVIDER = 'groq';
+    // GROQ_API_KEY / GROQ_MODEL deliberately left unset -- createAiProvider must throw before
+    // constructing a real GroqAiProvider, so no network call to Groq can ever occur here.
+    // v1Router is a static top-level import in app.ts, so the AiTextGenerationService
+    // constructed at ai.controller.ts's module scope runs during this import itself, not on the
+    // first request -- same fail-fast posture as env.ts's own loadEnv().
+    await expect(import('./app')).rejects.toThrow(
+      'AI_PROVIDER=groq requires both GROQ_API_KEY and GROQ_MODEL to be set.',
+    );
   });
 
   it('normalizes a provider failure into a safe API error', async () => {

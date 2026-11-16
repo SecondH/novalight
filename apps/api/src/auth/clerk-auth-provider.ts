@@ -44,25 +44,35 @@ export class ClerkAuthProvider implements AuthProvider {
       return null;
     }
 
-    const user = await this.clerkClient.users.getUser(payload.sub);
-    const primaryEmail = user.emailAddresses.find(
-      (e) => e.id === user.primaryEmailAddressId,
-    )?.emailAddress;
-    if (!primaryEmail) {
+    try {
+      const user = await this.clerkClient.users.getUser(payload.sub);
+      const primaryEmail = user.emailAddresses.find(
+        (e) => e.id === user.primaryEmailAddressId,
+      )?.emailAddress;
+      if (!primaryEmail) {
+        return null;
+      }
+
+      const localUserId = await this.userProvisioningService.resolveOrProvisionLocalUserId({
+        clerkUserId: payload.sub,
+        email: primaryEmail,
+      });
+      if (!localUserId) {
+        // Either provisioning failed to resolve a mapping, or the mapped User is deactivated --
+        // both fail closed, same as an invalid token.
+        return null;
+      }
+
+      return { userId: localUserId, email: primaryEmail };
+    } catch {
+      // A transient failure fetching the user from Clerk's API or provisioning/looking up the
+      // local User row (e.g. a network blip, a momentary database error) must not crash the
+      // process on an otherwise-valid token -- same fail-closed contract as the block above,
+      // and exactly the behavior ADR-029 already documents: "A JIT provisioning failure during
+      // a live request causes that request to fail authentication (401) rather than ever
+      // silently proceeding without a local User row."
       return null;
     }
-
-    const localUserId = await this.userProvisioningService.resolveOrProvisionLocalUserId({
-      clerkUserId: payload.sub,
-      email: primaryEmail,
-    });
-    if (!localUserId) {
-      // Either provisioning failed to resolve a mapping, or the mapped User is deactivated --
-      // both fail closed, same as an invalid token.
-      return null;
-    }
-
-    return { userId: localUserId, email: primaryEmail };
   }
 
   async invalidateSession(sessionToken: string): Promise<void> {

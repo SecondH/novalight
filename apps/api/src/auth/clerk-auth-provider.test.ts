@@ -71,6 +71,29 @@ describe('ClerkAuthProvider', () => {
       expect(resolveOrProvisionLocalUserId).not.toHaveBeenCalled();
     });
 
+    it('returns null, not a rejected promise, when clerkClient.users.getUser throws (e.g. a transient Clerk API failure)', async () => {
+      verifyToken.mockResolvedValue({ sub: 'user_123', sid: 'sess_456' });
+      getUser.mockRejectedValue(new Error('Clerk API: network error'));
+
+      const identity = await provider.verifySession('a-valid-token');
+
+      expect(identity).toBeNull();
+      expect(resolveOrProvisionLocalUserId).not.toHaveBeenCalled();
+    });
+
+    it('returns null, not a rejected promise, when resolveOrProvisionLocalUserId throws (e.g. a transient database failure)', async () => {
+      verifyToken.mockResolvedValue({ sub: 'user_123', sid: 'sess_456' });
+      getUser.mockResolvedValue({
+        primaryEmailAddressId: 'email_1',
+        emailAddresses: [{ id: 'email_1', emailAddress: 'owner@example.test' }],
+      });
+      resolveOrProvisionLocalUserId.mockRejectedValue(new Error('database connection lost'));
+
+      const identity = await provider.verifySession('a-valid-token');
+
+      expect(identity).toBeNull();
+    });
+
     it('returns null (fails closed) when the mapped local User is deactivated', async () => {
       verifyToken.mockResolvedValue({ sub: 'user_123', sid: 'sess_456' });
       getUser.mockResolvedValue({

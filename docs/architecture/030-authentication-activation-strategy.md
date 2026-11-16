@@ -4,11 +4,11 @@
 
 ## Document Metadata
 
-| Field            | Value                                                                                                                                                                                                                                      |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Document Version | 1.0                                                                                                                                                                                                                                        |
-| Status           | Proposed — pending human approval                                                                                                                                                                                                          |
-| Document Purpose | Record why authentication activation remains intentionally disabled after this release, enumerate the remaining production gates, and define the activation sequence, rollback strategy, and go-live checklist for when those gates close. |
+| Field            | Value                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Document Version | 1.1                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| Status           | **Accepted for local development environment** (2026-07-14, approved by the repository owner following an independent activation-specific `security-reviewer` pass with no Critical/High findings — see `docs/operations/` session record). Staging/production activation remains a separate, later decision gated on the items in §"Remaining production gates" below, which this Status change does **not** close. |
+| Document Purpose | Record why authentication activation remains intentionally disabled after this release, enumerate the remaining production gates, and define the activation sequence, rollback strategy, and go-live checklist for when those gates close.                                                                                                                                                                           |
 
 ## Context
 
@@ -22,14 +22,16 @@ The one remaining switch neither ADR authorizes is the single-line import change
 
 ## Decision
 
-**Authentication activation remains explicitly deferred.** This ADR does not activate it, and does not set a date — it defines the conditions under which a future, separate change may.
+**Authentication activation for local development is complete as of 2026-07-14.** The single-line import swap this ADR gates (`apps/api/src/middlewares/authentication.ts`, `InMemoryAuthProvider` → `ClerkAuthProvider`) has been applied, reviewed, and approved for the local development environment only. Staging/production activation is a separate, later decision — see "Remaining production gates" below, none of which are closed by this local activation.
 
-### Why still disabled
+### Why local activation is now authorized (was: "why still disabled")
 
-1. The `packages/database/prisma/migrations/20260713000000_add_user_clerk_identity_and_deactivation` migration has been reviewed but **not applied to any real database**. Activating `ClerkAuthProvider` without the `clerk_user_id`/`deactivated_at` columns existing would make every `UsersRepository` call throw at runtime.
-2. No live Clerk application keys have been exercised end-to-end against a running instance of this codebase — all verification to date is against mocked SDKs (`clerk-auth-provider.test.ts`) or synthetic Svix-signed payloads (`webhooks.test.ts`), not a real Clerk dashboard delivering real events.
-3. ADR-020's own terms require an independent `security-reviewer` sign-off **on the activation specifically** (not just on the code as written) before the import swap happens. That sign-off has not been sought yet — the security reviews performed so far were scoped to "is the inactive code safe to merge," not "is it safe to activate."
-4. No rollback drill has been exercised. The rollback strategy below is designed, not yet rehearsed.
+The four conditions that previously blocked activation are now resolved, for local development:
+
+1. The `packages/database/prisma/migrations/20260713000000_add_user_clerk_identity_and_deactivation` migration has been applied to the local development database (verified via direct schema inspection: `clerk_user_id`/`deactivated_at` present with expected constraints).
+2. Live Clerk application keys have been exercised end-to-end against a running local instance: a real sign-up, a real `user.created`/`user.updated`/`user.deleted` webhook delivery (via a local Cloudflare Tunnel), a real authenticated brand/account creation, and a real authenticated Groq AI request all completed successfully, verified via audit log and direct database inspection — not just mocked-SDK unit tests.
+3. An independent `security-reviewer` pass scoped specifically to activation (Clerk token verification, UUID mapping, webhook verification, cross-account isolation, deactivated-user denial, prompt/response logging, mock-provider absence, timeout/retry, CORS, rate limiting, error leakage) found no Critical or High defect. One High-severity defect found during this activation work (unguarded downstream calls in `ClerkAuthProvider.verifySession` risking an unhandled-rejection crash) was fixed and re-verified before this sign-off.
+4. No rollback drill has been exercised yet for a live/production environment — the rollback strategy below remains designed-not-rehearsed for that context. For local development, rollback was exercised informally during this session (service restarts, tunnel protocol changes) without incident.
 
 ### Remaining production gates
 
@@ -63,18 +65,18 @@ Because activation is deliberately isolated to a **one-line import change**, rol
 
 ### Production checklist
 
-Restates the gates above as a literal go/no-go list for whoever performs the activation:
+Restates the gates above as a literal go/no-go list for whoever performs the activation. **Local development environment status shown inline; staging/production remain unchecked and are a separate activation event with their own real infrastructure (real Supabase project, real deployed webhook endpoint, etc.), not satisfied by anything below:**
 
-- [ ] Migration applied to the target database, verified via schema inspection.
-- [ ] `CLERK_SECRET_KEY` set in the target environment (not committed, not logged).
-- [ ] `CLERK_WEBHOOK_SIGNING_SECRET` set in the target environment (not committed, not logged).
-- [ ] Webhook endpoint publicly reachable over HTTPS and registered in the Clerk dashboard.
-- [ ] At least one real `user.created` webhook delivery observed and confirmed processed (via audit log, not just a 200 response).
-- [ ] Independent `security-reviewer` sign-off obtained, scoped to activation specifically.
-- [ ] This ADR's Status field updated to Accepted, with the approving party and target environment(s) named.
-- [ ] Explicit human approval recorded for the import-swap PR.
-- [ ] Import-swap PR is a single-file diff (`apps/api/src/middlewares/authentication.ts`), reviewed independently of this release.
-- [ ] Post-deploy: `webhook.clerk.*` and `auth.clerk.deactivated_user_denied` audit events monitored for at least one full traffic cycle before considering activation complete.
+- [x] Migration applied to the target database, verified via schema inspection. _(local dev DB, 2026-07-14)_
+- [x] `CLERK_SECRET_KEY` set in the target environment (not committed, not logged). _(local dev `.env`, gitignored)_
+- [x] `CLERK_WEBHOOK_SIGNING_SECRET` set in the target environment (not committed, not logged). _(local dev `.env`, gitignored)_
+- [x] Webhook endpoint publicly reachable over HTTPS and registered in the Clerk dashboard. _(local dev, via Cloudflare Tunnel — see `docs/operations/031-local-cloudflare-tunnel.md`; not a staging/production endpoint)_
+- [x] At least one real `user.created` webhook delivery observed and confirmed processed (via audit log, not just a 200 response). _(confirmed 2026-07-14, plus real `user.updated`/`user.deleted` deliveries)_
+- [x] Independent `security-reviewer` sign-off obtained, scoped to activation specifically. _(2026-07-14, no Critical/High findings; one High finding from earlier in the same session fixed and re-verified before sign-off)_
+- [x] This ADR's Status field updated to Accepted, with the approving party and target environment(s) named. _(this edit — repository owner, local development environment only)_
+- [x] Explicit human approval recorded for the import-swap PR. _(repository owner approved the reviewed diff directly in this activation session; no GitHub PR was opened — per this session's constraints, no push/merge/commit was authorized)_
+- [x] Import-swap PR is a single-file diff (`apps/api/src/middlewares/authentication.ts`), reviewed independently of this release. _(diff was single-file as planned, shown for approval before being applied, and covered by the independent security review above)_
+- [ ] Post-deploy: `webhook.clerk.*` and `auth.clerk.deactivated_user_denied` audit events monitored for at least one full traffic cycle before considering activation complete. _(applies to a real deployed environment; not applicable to local development in the same sense — local session traffic was observed and audited, but this checklist item is left unchecked pending an actual staging/production deploy)_
 
 ## Reasoning
 
@@ -93,7 +95,7 @@ Trade-offs:
 
 ## What This ADR Does Not Do
 
-- Does not activate `ClerkAuthProvider` — `authentication.ts` is unchanged by this document.
-- Does not name a target date or environment for activation — that's a human/business decision made when the gates above are ready to close.
+- Does not activate `ClerkAuthProvider` for staging or production — those remain separate, later decisions gated on the unchecked items in the Production checklist above. (Local development activation is recorded as Accepted per the Status field at the top of this document, as of the 2026-07-14 revision.)
+- Does not name a target date or environment for staging/production activation — that's a human/business decision made when the remaining gates above are ready to close.
 - Does not resolve the RBAC role-taxonomy conflict tracked in `.claude/memory/known-risks.md` — a separate, still-open authorization concern, unaffected by authentication activation.
 - Does not implement a `ProcessedWebhookEvent` deduplication table — noted as a future recommendation in the Clerk-activation release readiness report, not designed here.
