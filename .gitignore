@@ -9,6 +9,18 @@ build/
 coverage/
 .turbo/
 
+# Playwright local run artifacts (screenshots for this session were written outside the repo,
+# to the session scratchpad, not here -- these are just Playwright's own transient run output)
+test-results/
+playwright-report/
+blob-report/
+
+# Local database dumps -- flagged by an independent architecture review (2026-07-14): an
+# untracked raw SQL dump (backups/novalight-pre-clerk-activation-20260713-161622.sql) was sitting
+# in the working tree with nothing preventing it from being swept into a future `git add -A`.
+# Database dumps may contain real data and must never be committed.
+backups/
+
 # Environment files -- broadened during M1.5 planning after independent risk review found
 # .env.production (and similar) were NOT actually excluded at the repo root or in apps/api
 # under the previous narrower patterns (only apps/web/.gitignore had a real .env* wildcard).
