@@ -6,9 +6,9 @@
  * was never designed to carry the richer shape a directly-exposed "generate text" API needs
  * (system/user prompt separation, temperature, usage/latency/finishReason, a correlation id) --
  * widening ModelProvider for this would risk the already-tested agent pipeline for a use case
- * it wasn't built for. Neither interface depends on the other; a future adapter could let the
- * agent pipeline use a real model via this interface instead of FakeModelProvider, but that is
- * not built here -- no current consumer needs it.
+ * it wasn't built for. Neither interface depends on the other; apps/api's
+ * AiProviderModelAdapter bridges the agent pipeline onto this interface so it can use a real
+ * model instead of FakeModelProvider (docs/architecture/035-agent-pipeline-real-provider-wiring.md).
  *
  * Deliberately scoped to one method, matching this package's existing convention of small,
  * single-purpose interface files (ModelProvider, AgentExecutor, Evaluator, PromptManager are

@@ -1,5 +1,7 @@
 # M1 — SaaS Core Foundation: Technical Design
 
+> **Superseded in part (2026-11-16):** the M1 agent pipeline now runs on Groq when `AI_ENABLED=true` and `AI_PROVIDER=groq`, through an adapter. See [ADR-035](../035-agent-pipeline-real-provider-wiring.md). Statements below that the pipeline is untouched, or that users see only canned output, describe the state before that change.
+
 > Not a converted source document. Authored during the NovaLight MVP M1 planning session, per [ADR-015](../017-documentation-structure-for-product-verticals.md). Numbered `028` (not `020`) to avoid colliding with the existing [020-ai-agent-specifications.md](./020-ai-agent-specifications.md) in this same local sequence.
 
 ## Document Metadata

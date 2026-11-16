@@ -1,5 +1,7 @@
 # ADR-021 — Groq AI Text-Generation Provider Foundation
 
+> **Superseded in part (2026-11-16):** the M1 agent pipeline now runs on Groq when `AI_ENABLED=true` and `AI_PROVIDER=groq`, through an adapter. See [ADR-035](./035-agent-pipeline-real-provider-wiring.md). Statements below that the pipeline is untouched, or that users see only canned output, describe the state before that change.
+
 > Not a converted source document. Authored during the NovaLight Groq AI provider implementation session, following the ADR pattern in [006-initial-architecture-decisions.md](./006-initial-architecture-decisions.md). Numbered `028` in the flat top-level sequence -- the highest number in use on this branch's base (`f251329`) was `027` ([027-m1.7-delivery-foundation-report.md](../operations/027-m1.7-delivery-foundation-report.md)); `docs/readiness/028-m2-development-entry-gate.md` uses `028` independently, in a directory excluded from this flat sequence per [docs/README.md](../README.md). ADR-numbered `021` in [ADR-009](./006-initial-architecture-decisions.md)'s sequence since it's the next accepted architecture decision after ADR-020 (Clerk), which lives on a separate branch not yet merged here.
 
 ## Document Metadata

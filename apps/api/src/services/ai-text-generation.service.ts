@@ -1,6 +1,7 @@
 import type { AiProvider, GenerateTextResult } from '@novalight/ai-core';
 import { AiProviderError } from '@novalight/ai-core';
 import { createAiProvider } from '../ai/providers/ai-provider-factory';
+import { mapAiErrorToApiError } from '../ai/ai-error-mapping';
 import { ApiError } from '../middlewares/error-handler';
 import { auditLogger } from '../audit/pino-audit-logger';
 import { logger } from '../config/logger';
@@ -32,24 +33,6 @@ function resolveProvider(): AiProvider | null {
     timeoutMs: env.AI_REQUEST_TIMEOUT_MS,
     retryCount: env.AI_RETRY_COUNT,
   });
-}
-
-/** Fixed, safe messages only -- never forwards AiProviderError.message verbatim to the client. */
-function mapAiErrorToApiError(error: AiProviderError): ApiError {
-  switch (error.code) {
-    case 'invalid_request':
-      return new ApiError('validation', 400, 'The AI request could not be processed.');
-    case 'rate_limited':
-      return new ApiError('business', 429, 'The AI provider is busy. Please try again shortly.');
-    case 'timeout':
-      return new ApiError('business', 504, 'The AI provider did not respond in time.');
-    case 'network_error':
-    case 'upstream_error':
-      return new ApiError('business', 502, 'The AI provider is currently unavailable.');
-    case 'configuration_error':
-    default:
-      return new ApiError('system', 500, 'The AI service is misconfigured.');
-  }
 }
 
 /**

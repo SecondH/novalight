@@ -47,6 +47,9 @@ const envSchema = z.object({
   // of AI_PROVIDER, until an operator deliberately opts in. Real Groq calls additionally require
   // AI_PROVIDER=groq; AI_ENABLED=true with the default AI_PROVIDER=mock only exercises the mock
   // provider (e.g. for tests/CI), never a real vendor call.
+  // The same pair also drives the Brand/Content agent pipeline (ai/agent-pipeline.ts):
+  // AI_ENABLED=true + AI_PROVIDER=groq -> real Groq output; anything else -> FakeModelProvider's
+  // canned output. See docs/architecture/035-agent-pipeline-real-provider-wiring.md.
   AI_ENABLED: z.enum(['true', 'false']).default('false'),
   // Explicit selection only -- no hidden fallback. Unknown values are rejected here at startup
   // (fail fast), not discovered later inside the provider factory.

@@ -9,9 +9,8 @@ import { BrandsService } from '../brands/brands.service';
 import { ContentPlannerAgent } from '../../ai/agents/content-planner.agent';
 import { CopywriterAgent } from '../../ai/agents/copywriter.agent';
 import { VisualPromptEngineerAgent } from '../../ai/agents/visual-prompt-engineer.agent';
-import { StaticPromptManager } from '../../ai/static-prompt-manager';
-import { SimpleAgentExecutor } from '../../ai/simple-agent-executor';
-import { FakeModelProvider } from '../../ai/fake-model-provider';
+import { agentExecutor, agentPromptManager as promptManager } from '../../ai/agent-pipeline';
+import { withAiErrorMapping } from '../../ai/ai-error-mapping';
 import { auditLogger } from '../../audit/pino-audit-logger';
 import { ApiError } from '../../middlewares/error-handler';
 import {
@@ -20,11 +19,9 @@ import {
 } from '../../utils/prisma-errors';
 import type { DraftEditBody } from './content.validators';
 
-// Test/fake ModelProvider only, shared instance -- per
-// docs/architecture/social-ai-platform/028-m1-technical-design.md §5. Prompt manager/executor
-// are stateless and cheap to share across the three agents that need them.
-const promptManager = new StaticPromptManager();
-const agentExecutor = new SimpleAgentExecutor(new FakeModelProvider());
+// Real model (Groq) or FakeModelProvider, selected once in ai/agent-pipeline.ts -- see
+// docs/architecture/035-agent-pipeline-real-provider-wiring.md. Prompt manager/executor are
+// stateless and shared across the three agents that need them.
 const contentPlannerAgent = new ContentPlannerAgent(promptManager, agentExecutor);
 const copywriterAgent = new CopywriterAgent(promptManager, agentExecutor);
 const visualPromptEngineerAgent = new VisualPromptEngineerAgent(promptManager, agentExecutor);
@@ -52,11 +49,13 @@ export class ContentService {
     const account = await this.accountContext.resolveAccountForUser(userId);
     const brand = await this.brandsService.requireConfirmedBrand(account.id);
 
-    const suggestions = await contentPlannerAgent.generateIdeas({
-      vertical: brand.vertical,
-      toneDescriptors: brand.toneDescriptors,
-      audienceDescription: brand.audienceDescription,
-    });
+    const suggestions = await withAiErrorMapping(() =>
+      contentPlannerAgent.generateIdeas({
+        vertical: brand.vertical,
+        toneDescriptors: brand.toneDescriptors,
+        audienceDescription: brand.audienceDescription,
+      }),
+    );
 
     const targetDate = new Date();
     const ideas = [];
@@ -91,13 +90,15 @@ export class ContentService {
       throw new ApiError('authorization', 404, 'Resource not found');
     }
 
-    const [caption, visualPrompt] = await Promise.all([
-      copywriterAgent.draftCaption({ topic: idea.topic, toneDescriptors: brand.toneDescriptors }),
-      visualPromptEngineerAgent.draftVisualPrompt({
-        topic: idea.topic,
-        visualStyleDescriptors: brand.visualStyleDescriptors,
-      }),
-    ]);
+    const [caption, visualPrompt] = await withAiErrorMapping(() =>
+      Promise.all([
+        copywriterAgent.draftCaption({ topic: idea.topic, toneDescriptors: brand.toneDescriptors }),
+        visualPromptEngineerAgent.draftVisualPrompt({
+          topic: idea.topic,
+          visualStyleDescriptors: brand.visualStyleDescriptors,
+        }),
+      ]),
+    );
 
     return withUniqueConstraintAsBusinessError(
       () =>

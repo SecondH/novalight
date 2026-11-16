@@ -2,19 +2,15 @@ import { BrandsRepository } from '../../repositories/brands.repository';
 import { AccountsRepository } from '../../repositories/accounts.repository';
 import { AccountContextService } from '../../services/account-context.service';
 import { BrandStrategistAgent } from '../../ai/agents/brand-strategist.agent';
-import { StaticPromptManager } from '../../ai/static-prompt-manager';
-import { SimpleAgentExecutor } from '../../ai/simple-agent-executor';
-import { FakeModelProvider } from '../../ai/fake-model-provider';
+import { agentExecutor, agentPromptManager } from '../../ai/agent-pipeline';
+import { withAiErrorMapping } from '../../ai/ai-error-mapping';
 import { auditLogger } from '../../audit/pino-audit-logger';
 import { ApiError } from '../../middlewares/error-handler';
 import type { BrandIntakeBody } from './brands.validators';
 
-// Test/fake ModelProvider only -- per explicit instruction, no external AI vendor is wired in
-// M1 (docs/architecture/social-ai-platform/028-m1-technical-design.md §5).
-const brandStrategistAgent = new BrandStrategistAgent(
-  new StaticPromptManager(),
-  new SimpleAgentExecutor(new FakeModelProvider()),
-);
+// Real model (Groq) or FakeModelProvider, selected once in ai/agent-pipeline.ts -- see
+// docs/architecture/035-agent-pipeline-real-provider-wiring.md.
+const brandStrategistAgent = new BrandStrategistAgent(agentPromptManager, agentExecutor);
 
 export class BrandsService {
   constructor(
@@ -33,13 +29,15 @@ export class BrandsService {
       throw new ApiError('business', 409, 'A brand profile already exists for this account');
     }
 
-    const draft = await brandStrategistAgent.interpretIntake({
-      vertical: account.vertical,
-      rawToneAnswer: input.rawToneAnswer,
-      rawAudienceAnswer: input.rawAudienceAnswer,
-      rawVisualAnswer: input.rawVisualAnswer,
-      rawOfferingsAnswer: input.rawOfferingsAnswer,
-    });
+    const draft = await withAiErrorMapping(() =>
+      brandStrategistAgent.interpretIntake({
+        vertical: account.vertical,
+        rawToneAnswer: input.rawToneAnswer,
+        rawAudienceAnswer: input.rawAudienceAnswer,
+        rawVisualAnswer: input.rawVisualAnswer,
+        rawOfferingsAnswer: input.rawOfferingsAnswer,
+      }),
+    );
 
     const brand = await this.brandsRepository.create(account.id, {
       vertical: account.vertical,

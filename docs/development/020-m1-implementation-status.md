@@ -15,7 +15,7 @@ packages/database/
 apps/api/src/
 ├── repositories/               5 files, every method account_id-scoped (or owner_user_id for accounts)
 ├── modules/{accounts,brands,content}/  controllers, services, routes, validators
-├── ai/                         FakeModelProvider, StaticPromptManager, SimpleAgentExecutor, 4 agents (test/fake only, no vendor)
+├── ai/                         FakeModelProvider, StaticPromptManager, SimpleAgentExecutor, 4 agents (fake by default; Groq via adapter since ADR-035)
 ├── auth/in-memory-auth-provider.ts     dev/test AuthProvider stand-in for Clerk
 ├── middlewares/{authentication,rate-limit,validate-body}.ts
 ├── audit/pino-audit-logger.ts  concrete AuditLogger, logs via existing Pino logger
@@ -29,7 +29,7 @@ apps/web/src/
 ## What does not exist yet
 
 - No live database is provisioned anywhere in this environment — the migration is generated and validated offline (`prisma validate`/`prisma migrate diff`) but never applied; `apps/api/src/ownership-isolation.test.ts`'s 3 DB-backed integration tests are gated behind `RUN_DB_INTEGRATION_TESTS=1` (default skipped) for this reason, same limitation already documented in [016-phase-0-implementation-status.md](./016-phase-0-implementation-status.md).
-- No real AI vendor is wired in (`FakeModelProvider` only, per explicit instruction).
+- No real AI vendor is wired in (`FakeModelProvider` only, per explicit instruction). **Superseded 2026-11-16 by [ADR-035](../architecture/035-agent-pipeline-real-provider-wiring.md):** the four agents now run on Groq when `AI_ENABLED=true` and `AI_PROVIDER=groq`; `FakeModelProvider` remains the default and the test provider.
 - No real authentication vendor is wired in (`InMemoryAuthProvider` only — Clerk integration remains future work per ADR-007).
 - `ApprovalHistory`/`PerformanceRecord` (MVP Track Stage 2/4 entities) — correctly not created, per ADR-018's staged introduction.
 - MVP Track Stage 3+ (multi-user, publishing automation) — blocked on the still-open RBAC role-taxonomy conflict.

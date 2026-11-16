@@ -5,8 +5,9 @@ import type {
 } from '@novalight/ai-core';
 
 /**
- * Test/fake ModelProvider only -- per explicit instruction, no external AI vendor is
- * integrated in M1 (docs/architecture/social-ai-platform/028-m1-technical-design.md §5).
+ * Test/fake ModelProvider -- the default (AI disabled) and test provider for the agent
+ * pipeline. Real-model output comes from AiProviderModelAdapter when AI_ENABLED=true and
+ * AI_PROVIDER=groq (docs/architecture/035-agent-pipeline-real-provider-wiring.md).
  * Deterministic: dispatches on the `[TEMPLATE:<id>]` marker line that
  * StaticPromptManager-rendered prompts always start with (see static-prompt-manager.ts),
  * so tests can assert exact output without any real model call. No paid API, no network call.
