@@ -13,8 +13,10 @@
 // isolation. Under concurrent Turborepo execution (every workspace's tests running at once),
 // that per-test module-reimport cost can occasionally exceed Jest's default 5-second timeout,
 // even though each test's own logic completes quickly in isolation. Scoped to this file only --
-// not a repository-wide timeout change.
-jest.setTimeout(15_000);
+// not a repository-wide timeout change. Raised from 15s to 30s (2026-11-17): the first test pays
+// the cold import of the whole graph (incl. @sentry/node, groq-sdk, Prisma) and measured >15s in
+// 2 of 5 full local runs on a loaded Windows machine; later tests in the file take ~1s.
+jest.setTimeout(30_000);
 
 // env.ts's top-level `import 'dotenv/config'` re-reads the real apps/api/.env from disk on
 // every fresh module load (jest.resetModules() below clears the module cache, forcing env.ts to
