@@ -1,5 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import type { AgentExecutor, PromptManager } from '@novalight/ai-core';
+import { parseTextModelOutput } from '../parse-model-output';
+
+const MAX_VISUAL_PROMPT_LENGTH = 1500;
 
 /**
  * Visual Prompt Engineer Agent -- per
@@ -27,6 +30,6 @@ export class VisualPromptEngineerAgent {
     });
 
     const result = await this.agentExecutor.run({ id: randomUUID(), input: prompt });
-    return result.output;
+    return parseTextModelOutput(result.output, MAX_VISUAL_PROMPT_LENGTH);
   }
 }

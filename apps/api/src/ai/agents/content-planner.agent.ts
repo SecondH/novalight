@@ -1,6 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import type { AgentExecutor, PromptManager } from '@novalight/ai-core';
 import type { Vertical } from '@novalight/database';
+import { z } from 'zod';
+import { parseJsonModelOutput } from '../parse-model-output';
+import { CONTENT_IDEA_FORMATS } from '../static-prompt-manager';
 
 /**
  * Content Planner Agent -- per docs/architecture/social-ai-platform/020-ai-agent-specifications.md §2.
@@ -19,6 +22,21 @@ export interface ContentIdeaSuggestion {
   intendedFormat: string;
 }
 
+const ideaSchema = z.object({
+  topic: z.string().trim().min(1).max(300),
+  intendedFormat: z.enum(CONTENT_IDEA_FORMATS),
+});
+const ideaListSchema = z.array(ideaSchema).min(1).max(10);
+
+/**
+ * Model output is untrusted input. Accepts a bare array (the requested shape) or an
+ * `{ "ideas": [...] }` wrapper, which JSON-mode-leaning models commonly produce instead.
+ */
+const contentIdeasOutputSchema = z.union([
+  ideaListSchema,
+  z.object({ ideas: ideaListSchema }).transform((wrapped) => wrapped.ideas),
+]);
+
 export class ContentPlannerAgent {
   constructor(
     private readonly promptManager: PromptManager,
@@ -34,6 +52,6 @@ export class ContentPlannerAgent {
     });
 
     const result = await this.agentExecutor.run({ id: randomUUID(), input: prompt });
-    return JSON.parse(result.output) as ContentIdeaSuggestion[];
+    return parseJsonModelOutput(result.output, contentIdeasOutputSchema);
   }
 }

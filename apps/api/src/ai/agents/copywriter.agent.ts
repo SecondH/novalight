@@ -1,5 +1,12 @@
 import { randomUUID } from 'node:crypto';
 import type { AgentExecutor, PromptManager } from '@novalight/ai-core';
+import { parseTextModelOutput } from '../parse-model-output';
+
+/**
+ * Matches the owner's own draft-edit limit (content.validators.ts draftEditSchema), so a generated
+ * caption is always one the owner can also save edits to. Below Instagram's 2,200-character cap.
+ */
+const MAX_CAPTION_LENGTH = 2000;
 
 /**
  * Copywriter Agent -- per docs/architecture/social-ai-platform/020-ai-agent-specifications.md §3.
@@ -23,6 +30,6 @@ export class CopywriterAgent {
     const prompt = template.render({ topic: input.topic, tone_descriptors: input.toneDescriptors });
 
     const result = await this.agentExecutor.run({ id: randomUUID(), input: prompt });
-    return result.output;
+    return parseTextModelOutput(result.output, MAX_CAPTION_LENGTH);
   }
 }

@@ -1,7 +1,6 @@
 import request from 'supertest';
 import { createApp } from './app';
 import { prisma } from '@novalight/database';
-import { authProvider } from './auth/in-memory-auth-provider';
 
 /**
  * Ownership-isolation tests per docs/development/019-mvp-m1-test-strategy.md §3 -- the
@@ -23,15 +22,65 @@ import { authProvider } from './auth/in-memory-auth-provider';
  * RUN_DB_INTEGRATION_TESTS=1 with a real DATABASE_URL once a CI database service (or local
  * Postgres) is available -- see the still-open "No CI/CD platform" item in
  * .claude/memory/known-risks.md.
+ *
+ * Authentication.ts now activates ClerkAuthProvider (ADR-029/ADR-030) -- a token minted via
+ * InMemoryAuthProvider.createSession() is no longer accepted by the live app. Unlike
+ * ai-text-generation.test.ts, this suite needs two independent, real Prisma-backed identities
+ * per test (Account A and Account B), not one fixed identity, so @clerk/backend and
+ * UserProvisioningService are mocked with a small per-token identity lookup map instead of a
+ * single fixed return value -- each createAccountWithSession() call gets its own synthetic
+ * Clerk identity resolving to the real User row just created, while the actual ownership-
+ * isolation logic under test still runs against the real database, unchanged.
  */
+const testIdentities = new Map<
+  string,
+  { clerkUserId: string; email: string; localUserId: string }
+>();
+
+jest.mock('@clerk/backend', () => ({
+  createClerkClient: () => ({
+    users: {
+      getUser: async (sub: string) => {
+        const identity = [...testIdentities.values()].find((i) => i.clerkUserId === sub);
+        return {
+          primaryEmailAddressId: 'email_1',
+          emailAddresses: identity ? [{ id: 'email_1', emailAddress: identity.email }] : [],
+        };
+      },
+    },
+    sessions: { revokeSession: jest.fn() },
+  }),
+  verifyToken: async (token: string) => {
+    const identity = testIdentities.get(token);
+    if (!identity) throw new Error('unknown test token');
+    return { sub: identity.clerkUserId, sid: `sess_${token}` };
+  },
+}));
+
+jest.mock('./services/user-provisioning.service', () => ({
+  UserProvisioningService: jest.fn().mockImplementation(() => ({
+    resolveOrProvisionLocalUserId: async ({ clerkUserId }: { clerkUserId: string }) => {
+      const identity = [...testIdentities.values()].find((i) => i.clerkUserId === clerkUserId);
+      return identity?.localUserId ?? null;
+    },
+  })),
+}));
+
 const describeIfDb = process.env.RUN_DB_INTEGRATION_TESTS === '1' ? describe : describe.skip;
 
 describeIfDb('Ownership isolation (cross-account IDOR prevention)', () => {
   const app = createApp();
+  // Suffix per test run -- this suite runs against a real, long-lived shared local Postgres
+  // (not a fresh/ephemeral test database), so a fixed fixture email collides with a row a prior
+  // run already created. Uniqueness per run avoids that without ever deleting existing rows.
+  const RUN_ID = Date.now();
 
-  async function createAccountWithSession(email: string) {
+  async function createAccountWithSession(emailLocalPart: string) {
+    const email = `${emailLocalPart}-${RUN_ID}@example.test`;
     const user = await prisma.user.create({ data: { email } });
-    const token = authProvider.createSession({ userId: user.id, email: user.email });
+    const clerkUserId = `clerk_test_${RUN_ID}_${emailLocalPart}`;
+    const token = `token_${clerkUserId}`;
+    testIdentities.set(token, { clerkUserId, email, localUserId: user.id });
     const createRes = await request(app)
       .post('/api/v1/accounts')
       .set('Authorization', `Bearer ${token}`)
@@ -53,8 +102,8 @@ describeIfDb('Ownership isolation (cross-account IDOR prevention)', () => {
   }
 
   it("Account B cannot read or write Account A's brand via a client-supplied account context", async () => {
-    const a = await createAccountWithSession('owner-a@example.test');
-    const b = await createAccountWithSession('owner-b@example.test');
+    const a = await createAccountWithSession('owner-a');
+    const b = await createAccountWithSession('owner-b');
     await submitBrandIntake(a.token);
 
     // B's own /brands/me must never return A's brand -- resolveAccountForUser derives
@@ -67,8 +116,8 @@ describeIfDb('Ownership isolation (cross-account IDOR prevention)', () => {
   });
 
   it("Account B cannot approve/discard/edit Account A's content draft (404, not 403 -- 028 §2.5)", async () => {
-    const a = await createAccountWithSession('owner-a2@example.test');
-    const b = await createAccountWithSession('owner-b2@example.test');
+    const a = await createAccountWithSession('owner-a2');
+    const b = await createAccountWithSession('owner-b2');
     await submitBrandIntake(a.token);
 
     const ideasRes = await request(app)
@@ -98,8 +147,8 @@ describeIfDb('Ownership isolation (cross-account IDOR prevention)', () => {
   });
 
   it('no endpoint accepts a client-supplied account_id to fetch a different Account (the Account-IDOR rule, 028 §2.2)', async () => {
-    const a = await createAccountWithSession('owner-a3@example.test');
-    const b = await createAccountWithSession('owner-b3@example.test');
+    const a = await createAccountWithSession('owner-a3');
+    const b = await createAccountWithSession('owner-b3');
 
     // There is deliberately no GET /accounts/:id endpoint -- only /accounts/me, which always
     // resolves from the authenticated user. This test documents that absence as intentional.

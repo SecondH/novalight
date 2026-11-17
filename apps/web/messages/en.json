@@ -1,0 +1,377 @@
+{
+  "common": {
+    "appName": "NovaLight",
+    "tagline": "Where Ideas Become Brands",
+    "loading": "Loading…",
+    "retry": "Try again",
+    "cancel": "Cancel",
+    "save": "Save",
+    "continue": "Continue",
+    "back": "Back",
+    "edit": "Edit",
+    "remove": "Remove",
+    "add": "Add",
+    "close": "Close",
+    "comingSoon": "Coming soon",
+    "optional": "Optional",
+    "requiredField": "This field is required",
+    "genericError": "Something went wrong. Please try again.",
+    "sessionExpired": "Your session has expired. Please sign in again."
+  },
+  "nav": {
+    "product": "Product",
+    "howItWorks": "How it works",
+    "forBusinesses": "For businesses",
+    "signIn": "Sign in",
+    "signUp": "Start creating",
+    "openMenu": "Open navigation menu",
+    "closeMenu": "Close navigation menu",
+    "localeSwitcherLabel": "Language",
+    "skipToContent": "Skip to main content"
+  },
+  "footer": {
+    "description": "AI-assisted brand and content planning for small businesses."
+  },
+  "landing": {
+    "meta": {
+      "title": "NovaLight — Where Ideas Become Brands",
+      "description": "NovaLight helps beauty salons, cafés, restaurants, and local service businesses turn ideas into consistent, professional social media brands using AI."
+    },
+    "hero": {
+      "badge": "Where ideas become brands",
+      "title": "Turn your business into a consistent social brand.",
+      "subtitle": "Plan ideas, draft captions, and shape your visual identity — with AI built around your business, not a generic template.",
+      "primaryCta": "Build your brand",
+      "secondaryCta": "See how it works",
+      "previewLabel": "Brand profile",
+      "previewBadge": "Conceptual preview",
+      "toneLabel": "Tone",
+      "tones": ["Warm", "Confident", "Approachable"],
+      "nextIdeaLabel": "Next content idea",
+      "nextIdeaText": "\"Behind the scenes: how we prepare your morning order\"",
+      "reelTag": "Reel",
+      "awarenessTag": "Awareness",
+      "days": ["Mon", "Wed", "Fri"]
+    },
+    "trustStrip": {
+      "points": [
+        "Built around your brand",
+        "Secure account isolation",
+        "Human-controlled AI",
+        "Designed for consistent publishing"
+      ]
+    },
+    "problemSolution": {
+      "eyebrow": "The problem",
+      "title": "Most small businesses don't have time to be their own social media team.",
+      "description": "NovaLight replaces scattered effort with one connected, AI-assisted workflow.",
+      "withoutTitle": "Without NovaLight",
+      "withTitle": "With NovaLight",
+      "problems": [
+        "Content feels inconsistent from post to post",
+        "Your brand voice isn't clearly defined anywhere",
+        "Planning takes hours you don't have",
+        "Ideas, captions, and scheduling live in different tools"
+      ],
+      "solutions": [
+        "One brand profile that shapes every piece of content",
+        "A defined tone and voice, generated from how you describe your business",
+        "AI-generated ideas and captions in minutes, not hours",
+        "Brand, ideas, and drafts in a single connected workflow"
+      ]
+    },
+    "howItWorks": {
+      "eyebrow": "How it works",
+      "title": "From a few questions to a working brand.",
+      "description": "Four steps, each building directly on the one before it.",
+      "steps": [
+        {
+          "title": "Describe your business",
+          "description": "Answer a few guided questions about your tone, audience, and what you offer."
+        },
+        {
+          "title": "Shape your brand identity",
+          "description": "AI turns your answers into a structured brand profile — tone, voice, and visual direction."
+        },
+        {
+          "title": "Generate relevant content",
+          "description": "Get content ideas and drafted captions grounded in your actual brand profile."
+        },
+        {
+          "title": "Plan and refine",
+          "description": "Review, edit, and approve drafts before anything is considered ready."
+        }
+      ]
+    },
+    "capabilities": {
+      "eyebrow": "Capabilities",
+      "title": "What's real today, and what's next.",
+      "description": "We'd rather tell you exactly what NovaLight does right now than oversell it.",
+      "availableNowBadge": "Available now",
+      "comingNextBadge": "Coming next",
+      "availableNow": [
+        "AI-generated brand profile from your own description",
+        "AI-generated content ideas grounded in your brand",
+        "AI-drafted captions you review before anything is final",
+        "Secure, account-isolated workspace for your business"
+      ],
+      "comingNext": [
+        "Visual content calendar",
+        "Direct publishing to social platforms",
+        "Performance analytics",
+        "AI image and video generation"
+      ]
+    },
+    "audience": {
+      "eyebrow": "Built for",
+      "title": "Small businesses that don't have a marketing team.",
+      "scenarios": [
+        {
+          "title": "Beauty salons",
+          "scenario": "Describe your services and style once — get on-brand caption ideas for new treatments, seasonal offers, and client transformations."
+        },
+        {
+          "title": "Cafés & restaurants",
+          "scenario": "Turn your menu, atmosphere, and daily specials into content ideas that sound like your café, not a generic template."
+        },
+        {
+          "title": "Local service businesses",
+          "scenario": "Explain what you do and who you serve — get content that builds trust before a customer ever calls."
+        }
+      ]
+    },
+    "finalCta": {
+      "title": "Build a brand your business actually sounds like.",
+      "description": "Answer a few questions. Get a real brand profile and your first content ideas.",
+      "cta": "Build your brand"
+    }
+  },
+  "auth": {
+    "signIn": {
+      "title": "Welcome back",
+      "description": "Sign in to continue building your brand."
+    },
+    "signUp": {
+      "title": "Join NovaLight",
+      "description": "Start turning your business into a consistent social brand."
+    }
+  },
+  "onboarding": {
+    "progress": "Step {current} of {total}",
+    "accountSetup": {
+      "title": "Tell us about your business",
+      "description": "This helps NovaLight tailor content ideas to your industry from the very first draft.",
+      "verticalQuestion": "Which of these best describes your business?",
+      "verticalHint": "This sets the starting point for your brand profile — you can refine everything in the next step.",
+      "verticals": {
+        "BEAUTY_SALON": "Beauty salon",
+        "RESTAURANT": "Restaurant",
+        "CAFE": "Café",
+        "LOCAL_SERVICE": "Local service business",
+        "RETAIL": "Retail"
+      },
+      "verticalDescriptions": {
+        "BEAUTY_SALON": "Hair, nails, skincare, spa, and similar personal-care services",
+        "RESTAURANT": "Sit-down or takeaway food service",
+        "CAFE": "Coffee shops, bakeries, and casual all-day spots",
+        "LOCAL_SERVICE": "Repair, home, wellness, or other in-person service businesses",
+        "RETAIL": "Shops selling physical products directly to customers"
+      },
+      "submit": "Create my account",
+      "submitting": "Setting up your account…",
+      "error": "We couldn't create your account. Please try again."
+    },
+    "brandSetup": {
+      "title": "Build your brand profile",
+      "description": "Answer in your own words — NovaLight turns this into a structured brand profile you can review before anything is used.",
+      "suggestionsLabel": "Need a starting point? Tap any that fit:",
+      "suggestionsHint": "Tapping a suggestion adds it to your answer — edit or remove anything, and write your own from scratch at any time.",
+      "customPlaceholder": "Add your own…",
+      "customAdd": "Add",
+      "reviewTitle": "Review your brand profile",
+      "reviewDescription": "Here's what we'll save. You can come back and edit this anytime.",
+      "confirm": "Confirm brand profile",
+      "summaryLabels": {
+        "tone": "Tone",
+        "audience": "Audience",
+        "visual": "Visual style",
+        "offerings": "Offerings"
+      },
+      "editAnswer": "Edit this answer",
+      "submit": "Continue",
+      "submitting": "Generating your brand profile…",
+      "error": "We couldn't save your brand profile. Please try again.",
+      "suggestions": {
+        "labels": {
+          "tone": {
+            "warm": "Warm",
+            "professional": "Professional",
+            "playful": "Playful",
+            "minimal": "Minimal",
+            "energetic": "Energetic",
+            "pampering": "Pampering",
+            "elegant": "Elegant",
+            "cozy": "Cozy",
+            "welcoming": "Welcoming",
+            "indulgent": "Indulgent",
+            "refined": "Refined",
+            "reliable": "Reliable",
+            "straightforward": "Straightforward",
+            "trendy": "Trendy",
+            "curated": "Curated"
+          },
+          "audience": {
+            "localCommunity": "People in the local community",
+            "busyProfessionals": "Busy professionals",
+            "families": "Families",
+            "youngAdults": "Young adults",
+            "valueSeekers": "Customers looking for good value",
+            "selfCareClients": "Clients focused on self-care",
+            "bridesAndEvents": "Brides and event bookings",
+            "remoteWorkers": "Remote workers",
+            "students": "Students",
+            "dateNight": "Date-night couples",
+            "groupsAndFamilies": "Groups and families",
+            "homeowners": "Homeowners",
+            "firstTimeCustomers": "First-time customers",
+            "giftShoppers": "Gift shoppers",
+            "repeatCustomers": "Repeat customers"
+          },
+          "visual": {
+            "brightAndClean": "Bright and clean",
+            "warmAndCozy": "Warm and cozy",
+            "boldAndColorful": "Bold and colorful",
+            "minimalAndModern": "Minimal and modern",
+            "naturalLight": "Lots of natural light",
+            "softPastels": "Soft pastel tones",
+            "elegantMonochrome": "Elegant monochrome",
+            "rusticWarm": "Rustic and warm",
+            "industrialChic": "Industrial-chic",
+            "moodyElegant": "Moody and elegant",
+            "vibrantFresh": "Vibrant and fresh",
+            "cleanProfessional": "Clean and professional",
+            "approachableCasual": "Approachable and casual",
+            "curatedFlatlay": "Curated flat-lay shots",
+            "lifestyleImagery": "Lifestyle imagery"
+          },
+          "offerings": {
+            "walkInsWelcome": "Walk-ins welcome",
+            "appointmentBased": "Appointment-based",
+            "onlineBooking": "Online booking",
+            "haircuts": "Haircuts and styling",
+            "coloring": "Coloring",
+            "manicurePedicure": "Manicure and pedicure",
+            "spaTreatments": "Spa treatments",
+            "specialtyCoffee": "Specialty coffee",
+            "freshPastries": "Fresh pastries",
+            "breakfastMenu": "Breakfast menu",
+            "cozySeating": "Cozy seating",
+            "signatureDishes": "Signature dishes",
+            "seasonalMenu": "Seasonal menu",
+            "catering": "Catering",
+            "dineInAndTakeaway": "Dine-in and takeaway",
+            "repairsAndMaintenance": "Repairs and maintenance",
+            "consultations": "Consultations",
+            "emergencyService": "Emergency service",
+            "homeVisits": "Home visits",
+            "curatedProducts": "Curated product selection",
+            "giftWrapping": "Gift wrapping",
+            "limitedEditions": "Limited editions",
+            "onlineOrders": "Online orders"
+          }
+        }
+      },
+      "fields": {
+        "tone": {
+          "label": "In a few words, how would you describe your brand's tone?",
+          "description": "Think about how you'd want a customer to feel reading your posts.",
+          "placeholder": "e.g. Warm and welcoming, with a bit of playful humor"
+        },
+        "audience": {
+          "label": "Who is your typical customer?",
+          "description": "Age range, lifestyle, what they're looking for — whatever comes to mind.",
+          "placeholder": "e.g. Busy professionals in their 30s who want quick, healthy options"
+        },
+        "visual": {
+          "label": "How would you describe your visual style?",
+          "description": "Colors, mood, photography style — anything that captures your look.",
+          "placeholder": "e.g. Bright, clean, and minimal with lots of natural light"
+        },
+        "offerings": {
+          "label": "What do you offer?",
+          "description": "Your main products or services, in your own words.",
+          "placeholder": "e.g. Specialty coffee, fresh pastries, and a cozy space to work"
+        }
+      }
+    }
+  },
+  "dashboard": {
+    "nav": {
+      "content": "Content",
+      "calendar": "Calendar",
+      "settings": "Settings"
+    },
+    "settingsPlaceholder": {
+      "title": "Settings",
+      "description": "Account, team, and billing settings are planned for a later release and aren't available yet."
+    },
+    "content": {
+      "title": "Content",
+      "description": "Generate ideas, turn them into drafts, and approve what's ready to publish.",
+      "generateIdeas": "Generate new ideas",
+      "generating": "Generating ideas…",
+      "emptyTitle": "No content ideas yet",
+      "emptyDescription": "Generate your first set of AI content ideas based on your brand profile.",
+      "errorTitle": "We couldn't load your content",
+      "ideaCard": {
+        "createDraft": "Create draft",
+        "creatingDraft": "Creating draft…",
+        "targetDate": "Target date: {date}"
+      },
+      "draftCard": {
+        "approve": "Approve",
+        "discard": "Discard",
+        "schedule": "Schedule",
+        "edit": "Edit draft",
+        "scheduleDateLabel": "Schedule for",
+        "captionLabel": "Caption",
+        "visualPromptLabel": "Visual prompt",
+        "states": {
+          "DRAFT": "Draft",
+          "EDITED": "Edited",
+          "APPROVED": "Approved",
+          "DISCARDED": "Discarded"
+        }
+      }
+    },
+    "calendar": {
+      "title": "Calendar",
+      "description": "See what's scheduled and what's already posted.",
+      "emptyTitle": "Nothing scheduled yet",
+      "emptyDescription": "Approve and schedule a content draft to see it appear here.",
+      "errorTitle": "We couldn't load your calendar",
+      "draftReference": "Draft #{id}",
+      "scheduledFor": "Scheduled for {date}",
+      "reschedule": "Reschedule",
+      "markPosted": "Mark as posted",
+      "discard": "Remove",
+      "states": {
+        "SCHEDULED": "Scheduled",
+        "POSTED": "Posted",
+        "DISCARDED": "Removed"
+      }
+    }
+  },
+  "validation": {
+    "required": "This field can't be empty",
+    "tooShort": "Please add a bit more detail ({min} characters minimum)",
+    "duplicate": "You've already added this"
+  },
+  "a11y": {
+    "brandProfileReview": "Brand profile review",
+    "brandIntakeForm": "Brand intake",
+    "primaryNavigation": "Primary",
+    "userMenu": "Account menu",
+    "localeSwitcher": "Switch language"
+  }
+}

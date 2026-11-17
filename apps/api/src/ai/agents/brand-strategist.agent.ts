@@ -1,6 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import type { AgentExecutor, PromptManager } from '@novalight/ai-core';
 import type { Vertical } from '@novalight/database';
+import { z } from 'zod';
+import { parseJsonModelOutput } from '../parse-model-output';
 
 /**
  * Brand Strategist Agent -- per docs/architecture/social-ai-platform/020-ai-agent-specifications.md §1.
@@ -23,6 +25,16 @@ export interface BrandProfileDraft {
   offeringsSummary: string;
 }
 
+const profileField = z.string().trim().min(1).max(1000);
+
+/** Model output is untrusted input -- validated before it is persisted as the brand profile. */
+const brandProfileDraftSchema = z.object({
+  toneDescriptors: profileField,
+  audienceDescription: profileField,
+  visualStyleDescriptors: profileField,
+  offeringsSummary: profileField,
+});
+
 export class BrandStrategistAgent {
   constructor(
     private readonly promptManager: PromptManager,
@@ -40,6 +52,6 @@ export class BrandStrategistAgent {
     });
 
     const result = await this.agentExecutor.run({ id: randomUUID(), input: prompt });
-    return JSON.parse(result.output) as BrandProfileDraft;
+    return parseJsonModelOutput(result.output, brandProfileDraftSchema);
   }
 }

@@ -24,3 +24,21 @@ export const agentInvocationRateLimit = rateLimit({
     next(new ApiError('business', 429, 'Rate limit exceeded -- please try again shortly'));
   },
 });
+
+/**
+ * The Clerk webhook route (apps/api/src/modules/webhooks) has no req.userId -- it's an
+ * unauthenticated-but-signed system-to-system call, so agentInvocationRateLimit's account-scoped
+ * keying doesn't apply here. IP-keyed, generous ceiling: the Svix signature check is the real
+ * security boundary (ADR-029), this is defense-in-depth against flood/replay, not the primary
+ * control, so it must not throttle Clerk's own legitimate delivery/retry traffic.
+ */
+export const clerkWebhookRateLimit = rateLimit({
+  windowMs: 60_000,
+  limit: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req: Request): string => req.ip ?? 'unknown',
+  handler: (_req, _res, next) => {
+    next(new ApiError('business', 429, 'Rate limit exceeded'));
+  },
+});
