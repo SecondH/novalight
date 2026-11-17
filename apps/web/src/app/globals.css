@@ -32,6 +32,10 @@
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
   --color-accent-foreground: var(--accent-foreground);
+  --color-warm: var(--warm);
+  --color-warm-foreground: var(--warm-foreground);
+  --animate-float: float 7s ease-in-out infinite;
+  --animate-float-delayed: float 7s ease-in-out 2.5s infinite;
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
   --color-muted: var(--muted);
@@ -73,6 +77,9 @@
   --muted-foreground: oklch(0.48 0.02 277);
   --accent: oklch(0.94 0.03 277);
   --accent-foreground: oklch(0.34 0.15 277);
+  /* Warm second accent (ADR-036): highlight gradient + hero glow only, never a semantic color. */
+  --warm: oklch(0.6 0.19 35);
+  --warm-foreground: oklch(0.99 0.005 35);
   --destructive: oklch(0.577 0.245 27.325);
   --success: oklch(0.508 0.118 165.6);
   --success-foreground: oklch(1 0 0);
@@ -112,6 +119,8 @@
   --muted-foreground: oklch(0.68 0.02 277);
   --accent: oklch(0.28 0.05 277);
   --accent-foreground: oklch(0.88 0.06 277);
+  --warm: oklch(0.76 0.15 45);
+  --warm-foreground: oklch(0.18 0.03 45);
   --destructive: oklch(0.704 0.191 22.216);
   --success: oklch(0.68 0.13 163.2);
   --success-foreground: oklch(0.145 0.02 163);
@@ -144,5 +153,15 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
   }
 }

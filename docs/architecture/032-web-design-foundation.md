@@ -91,6 +91,8 @@ Independent code-level review (fresh agent each round, no prior context, read-on
 
 **Explicit limitation, stated honestly, unchanged across all four rounds**: no browser/screenshot tool was available in this environment. All scoring — including contrast — was computed from source (Tailwind classes, oklch token math via an independently-written contrast calculator) rather than observed in a rendered browser. Actual rendered pixels, real computed contrast after browser color management, and real responsive behavior at physical viewport widths were not verified and should be spot-checked visually before this is considered production-ready.
 
+> **Hero superseded (prototype, 2026-11-17):** the conceptual preview card in §10 is replaced on branch `feature/landing-hero-v2` by a phone feed of real agent output. See [ADR-036](./036-landing-hero-v2.md).
+
 ## 12. Remaining gaps
 
 - No theme-toggle UI (system-preference-only dark mode) — acceptable for this release's scope, revisit if a manual toggle becomes a product requirement.

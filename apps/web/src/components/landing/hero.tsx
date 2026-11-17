@@ -4,9 +4,12 @@ import { Container } from '@/components/shared/container';
 import { Link } from '@/i18n/navigation';
 import { buttonVariants } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
+import { HeroShowcase } from './hero-showcase';
 
 /**
+ * Landing hero v2 (ADR-036): copy on one side, a live-feeling phone feed of real NovaLight
+ * agent output on the other.
+ *
  * Primary CTA links to /content (the dashboard entry point) rather than directly to
  * /brand-setup -- middleware already redirects unauthenticated visitors to /sign-in first, and
  * the dashboard layout itself redirects an account-less or brand-less visitor onward to
@@ -16,97 +19,67 @@ import { Card } from '@/components/ui/card';
  */
 export function Hero() {
   const t = useTranslations('landing.hero');
-  const tones = t.raw('tones') as string[];
-  const days = t.raw('days') as string[];
 
   return (
-    <Container className="grid items-center gap-16 pt-16 pb-8 sm:pt-24 lg:grid-cols-[1.05fr_0.95fr] lg:pt-28">
-      <div className="flex flex-col items-start gap-7 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-3 motion-safe:duration-700">
-        <Badge variant="secondary" className="h-auto gap-1.5 rounded-full px-3 py-1.5 text-xs">
-          <Sparkles className="size-3.5 text-primary" aria-hidden="true" />
-          {t('badge')}
-        </Badge>
+    <section className="relative isolate overflow-hidden">
+      {/* Decorative backdrop: two soft glows (accent + warm) over a faded dot grid. */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute -top-40 start-[8%] size-[34rem] rounded-full bg-primary/20 blur-[120px] dark:bg-primary/25" />
+        <div className="absolute top-24 end-[4%] size-[28rem] rounded-full bg-warm/20 blur-[120px] dark:bg-warm/15" />
+        <div className="absolute inset-0 bg-[radial-gradient(color-mix(in_oklch,var(--foreground)_9%,transparent)_1px,transparent_1px)] bg-size-[22px_22px] mask-[radial-gradient(ellipse_70%_60%_at_50%_35%,black,transparent)]" />
+      </div>
 
-        <h1 className="text-balance font-heading text-4xl font-semibold leading-[1.08] tracking-tight text-foreground sm:text-5xl lg:text-[3.25rem]">
-          {t('title')}
-        </h1>
-
-        <p className="max-w-lg text-pretty text-lg leading-relaxed text-muted-foreground">
-          {t('subtitle')}
-        </p>
-
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <Link
-            href="/content"
-            className={buttonVariants({ size: 'lg', className: 'h-11 px-6 text-[15px]' })}
+      <Container className="grid items-center gap-14 pt-14 pb-16 sm:pt-20 lg:grid-cols-[1.05fr_0.95fr] lg:gap-10 lg:pt-24 lg:pb-24">
+        <div className="flex flex-col items-start gap-7 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-3 motion-safe:duration-700">
+          <Badge
+            variant="secondary"
+            className="h-auto gap-1.5 rounded-full border border-border/70 bg-card/70 px-3 py-1.5 text-xs backdrop-blur"
           >
-            {t('primaryCta')}
-            <ArrowRight className="size-4 rtl:-scale-x-100" aria-hidden="true" />
-          </Link>
-          <a
-            href="#how-it-works"
-            className={buttonVariants({
-              size: 'lg',
-              variant: 'outline',
-              className: 'h-11 px-6 text-[15px]',
+            <Sparkles className="size-3.5 text-primary" aria-hidden="true" />
+            {t('badge')}
+          </Badge>
+
+          <h1 className="text-balance font-heading text-4xl font-bold leading-[1.1] tracking-tight text-foreground sm:text-5xl lg:text-[3.6rem]">
+            {t.rich('title', {
+              highlight: (chunks) => (
+                <span className="bg-linear-to-r from-primary to-warm bg-clip-text text-transparent rtl:bg-linear-to-l">
+                  {chunks}
+                </span>
+              ),
             })}
-          >
-            {t('secondaryCta')}
-          </a>
+          </h1>
+
+          <p className="max-w-lg text-pretty text-lg leading-relaxed text-muted-foreground">
+            {t('subtitle')}
+          </p>
+
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Link
+              href="/content"
+              className={buttonVariants({
+                size: 'lg',
+                className:
+                  'h-12 px-7 text-[15px] shadow-lg shadow-primary/25 transition-shadow hover:shadow-xl hover:shadow-primary/30',
+              })}
+            >
+              {t('primaryCta')}
+              <ArrowRight className="size-4 rtl:-scale-x-100" aria-hidden="true" />
+            </Link>
+            <a
+              href="#how-it-works"
+              className={buttonVariants({
+                size: 'lg',
+                variant: 'outline',
+                className: 'h-12 bg-card/60 px-7 text-[15px] backdrop-blur',
+              })}
+            >
+              {t('secondaryCta')}
+            </a>
+          </div>
         </div>
-      </div>
 
-      <div
-        className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 motion-safe:duration-700"
-        aria-hidden="true"
-      >
-        <Card className="relative gap-0 border border-border/80 bg-card/80 p-1 shadow-[0_1px_2px_rgba(15,17,26,0.04)] ring-1 ring-foreground/[0.06] backdrop-blur-sm">
-          <div className="flex items-center justify-between gap-2 border-b border-border/70 px-4 py-3">
-            <span className="text-xs font-medium text-muted-foreground">{t('previewLabel')}</span>
-            <Badge variant="outline" className="rounded-full text-[10px] uppercase tracking-wide">
-              {t('previewBadge')}
-            </Badge>
-          </div>
-
-          <div className="flex flex-col gap-4 px-4 py-4">
-            <div>
-              <p className="text-xs font-medium text-muted-foreground">{t('toneLabel')}</p>
-              <div className="mt-1.5 flex flex-wrap gap-1.5">
-                {tones.map((tone) => (
-                  <Badge key={tone} variant="secondary" className="rounded-full">
-                    {tone}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-
-            <div className="rounded-lg border border-primary/25 bg-accent/60 p-3">
-              <p className="text-xs font-medium text-accent-foreground">{t('nextIdeaLabel')}</p>
-              <p className="mt-1 text-sm text-foreground">{t('nextIdeaText')}</p>
-              <div className="mt-2 flex gap-1.5">
-                <Badge variant="outline" className="rounded-full text-[10px]">
-                  {t('reelTag')}
-                </Badge>
-                <Badge variant="outline" className="rounded-full text-[10px]">
-                  {t('awarenessTag')}
-                </Badge>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2">
-              {days.map((day) => (
-                <div
-                  key={day}
-                  className="rounded-md border border-border/70 bg-secondary/60 px-2 py-2 text-center"
-                >
-                  <p className="text-[10px] font-medium text-muted-foreground">{day}</p>
-                  <div className="mx-auto mt-1.5 h-1.5 w-6 rounded-full bg-primary/40" />
-                </div>
-              ))}
-            </div>
-          </div>
-        </Card>
-      </div>
-    </Container>
+        <HeroShowcase />
+      </Container>
+    </section>
   );
 }

@@ -89,6 +89,10 @@ export default async function LocaleLayout({
       dir={dir}
       className={`${geistSans.variable} ${geistMono.variable} ${vazirmatn.variable} h-full antialiased motion-safe:scroll-smooth`}
       style={fontVars}
+      // The pre-paint theme script below adds `dark` to this element before React hydrates;
+      // without this, every dark-mode visit logs a hydration mismatch. Applies to this element's
+      // own attributes only, not its children.
+      suppressHydrationWarning
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />

@@ -89,6 +89,7 @@ Read these first, in order, before planning or implementing any change:
 | [ADR-033 — Bilingual (Persian/English) Internationalization Architecture](./architecture/033-bilingual-i18n-architecture.md)      | Accepted             | next-intl adoption, locale-prefixed routing, RTL/LTR strategy, translation structure, font strategy                                    |
 | [ADR-034 — Application Shell and M1 Module Scope](./architecture/034-application-shell-and-module-scope.md)                       | Accepted             | Dashboard shell architecture; Implement Now / UI Foundation / Future Scope matrix for candidate modules                                |
 | [ADR-035 — Agent Pipeline on a Real AI Provider (Groq)](./architecture/035-agent-pipeline-real-provider-wiring.md)                | Accepted (direction) | Adapter wiring the M1 agents to Groq; explicit provider selection; validated model output; open items (model, allow-list, rate limits) |
+| [ADR-036 — Landing Hero v2: Show Real Output](./architecture/036-landing-hero-v2.md)                                              | Proposed (prototype) | Phone feed of real, unedited agent output; accessible business switcher; motion without new dependencies                               |
 
 ## Product
 
